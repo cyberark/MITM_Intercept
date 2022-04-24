@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
-# Name:        mitm_intercept.py
-# Purpose:     Performs SSL interception and forward it to a local proxy server
+# Name:        mitm_snatcher.py
+# Purpose:     Performs SSL interception and forwards it to a local proxy server
 #              for inspection.
 #
 # Author:      Nethanel Coppenhagen
@@ -38,8 +38,8 @@ TLS_VERSIONS = {"defualt": ssl.PROTOCOL_TLS,
                 "tls12": ssl.PROTOCOL_TLSv1_2}
 
 
-__prog_name__ = "mitm_intercept"
-__version__ = 1.0
+__prog_name__ = "mitm_snatcher"
+__version__ = 1.6
 
 
 class _SSLHelper:
@@ -102,7 +102,7 @@ class _SSLHelper:
 
 
 class _UDPSocket(socket.socket):
-    """A small subclass of socket to handle udp sockets as if they are stream
+    """A small subclass of socket to handle UDP sockets as if they are stream
     sockets."""
 
     def __init__(self, sock, event_udp_sent):
@@ -151,14 +151,14 @@ class _UDPSocket(socket.socket):
 
 
 class NonBlockingServerMixIn:
-    """A mix in class that adds non-blocking capability to a server. Must be
+    """A mixin class that adds a non-blocking capability to a server. Must be
     inherited with another server class."""
 
     def __init__(self, server_address, request_handler,
                  bind_and_activate = True, sock = None):
         """Initialize non-blocking server."""
 
-        # Initialize the server class that inherited with this mix in.
+        # Initialize the server class that is inherited with this mixin.
         super().__init__(server_address, request_handler, False)
 
         # If needed, set a new socket instance (like SSLSocket).
@@ -178,11 +178,11 @@ class NonBlockingServerMixIn:
 
 
 class RelayRequstHandlerMixIn:
-    """A mix in requst handler that perform a Realy. Must be inherited with
-    another requst handler class"""
+    """A mixin request handler that performs a relay. Must be inherited with
+    another request handler class"""
 
     def setup(self):
-        """Sets up the handler and create a connection with the target."""
+        """Sets up the handler and creates a connection with the target."""
 
         super().setup()
         self.event_k = self.server.event_k
@@ -282,8 +282,8 @@ class RelayRequstHandlerMixIn:
         # Set headers for interception server.
         headers = {u'User-Agent':None, u'Accept':None, u'Accept-Encoding':None,
                    u'Connection':None}
-        headers['X-Mitm_InterCept-To'] = server_str if to_server else client_str
-        headers['X-Mitm_InterCept-From'] = client_str if to_server else server_str
+        headers['X-Mitm_Snatch-To'] = server_str if to_server else client_str
+        headers['X-Mitm_snatch-From'] = client_str if to_server else server_str
         headers["To-Server"] = str(to_server)
         url = "http://{0}:{1}/{2}/{3}/{4}".format(*self.server.webserver_addr,
               ('CLIENT_REQUEST/to' if to_server else 'SERVER_RESPONSE/from'),
@@ -323,8 +323,8 @@ class UDPRelayRequstHandler(RelayRequstHandlerMixIn, DatagramRequestHandler):
 
 
 class RelayServerMixIn(NonBlockingServerMixIn):
-    """Relay server mix in class add the capability to receive connections and
-    forwards them to a target address. Must be inherited with another server
+    """Relay server mixin class that adds the capability to receive connections
+    and forwards them to a target address. Must be inherited with another server
     class."""
 
     def __init__(self, server_address, request_handler, target_addr,
