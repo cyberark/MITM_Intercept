@@ -1,6 +1,6 @@
-# mitm_intercept
+# MITM_Snatcher
 
-A hackish way to intercept and modify non-HTTP protocols through Burp and others with SSL and TLS interception support.
+A little bit less hackish way to intercept and modify non-HTTP protocols through Burp and others with SSL and TLS interception support.
 
 An improved version of the fantastic [mitm_relay](https://github.com/jrmdev/mitm_relay) project.
 
@@ -24,7 +24,7 @@ Another way to modify the messages is by using a python script that the HTTP int
 
 The body of the messages sent to the HTTP interception server will be printed to the shell. The messages will be printed after the changes if the modification script is given. After all the modifications, the interception server will also echo back as an HTTP response body.
 
-To decrypt the SSL/TLS communication, mitm_intercept need to be provided a certificate and a key that the client will accept when starting a handshake with the listener. If the target server requires a specific certificate for a handshake, there is an option to give a certificate and a key. 
+To decrypt the SSL/TLS communication, mitm_snatcher need to be provided a certificate and a key that the client will accept when starting a handshake with the listener. If the target server requires a specific certificate for a handshake, there is an option to give a certificate and a key. 
 
 A small chart to show the typical traffic flow:
 
@@ -33,23 +33,29 @@ A small chart to show the typical traffic flow:
 
 ## Differences from mitm_relay 
 
-mitm_intercept is compatible with newer versions of python 3 (python 3.9) and is also compatible with windows (socket.MSG_DONTWAIT does not exist in windows, for example). We kept the option of using “STARTTLS,” and we called it “Mixed” mode. Using the SSL key log file is updated (the built-in option to use it is new from python 3.8), and we added the option to change the [sni header](https://en.wikipedia.org/wiki/Server_Name_Indication). Now, managing incoming and outgoing communication is done by [socketserver]( https://docs.python.org/3/library/socketserver.html), and all the data is sent to a subclass of [ThreadingHTTPServer](https://docs.python.org/3/library/http.server.html#http.server.ThreadingHTTPServer) that handle the data representation and modification. This way, it is possible to see the changes applied by the modification script in the response (convenient for using Burp). Also, we can now change the available ciphers that the script uses using the [OpenSSL cipher list format](https://www.openssl.org/docs/manmaster/man1/ciphers.html)
+mitm_snatcher is compatible with newer versions of python 3 (python 3.9) and is also compatible with windows (socket.MSG_DONTWAIT does not exist in windows, for example). We kept the option of using “STARTTLS,” and we called it “Mixed” mode. Using the SSL key log file is updated (the built-in option to use it is new from python 3.8), and we added the option to change the [sni header](https://en.wikipedia.org/wiki/Server_Name_Indication). Now, managing incoming and outgoing communication is done by [socketserver]( https://docs.python.org/3/library/socketserver.html), and all the data is sent to a subclass of [ThreadingHTTPServer](https://docs.python.org/3/library/http.server.html#http.server.ThreadingHTTPServer) that handle the data representation and modification. This way, it is possible to see the changes applied by the modification script in the response (convenient for using Burp). Also, we can now change the available ciphers that the script uses using the [OpenSSL cipher list format](https://www.openssl.org/docs/manmaster/man1/ciphers.html)
+
+
+## Prerequisites
+
+1. Python 3.9
+2. [requests](https://docs.python-requests.org/en/latest/): `$ python -m pip install requests`
 
 
 ## Usage
 
 ```
-usage: mitm_intercept.py [-h] [-m] -l
-                         [u|t:]<interface>:<port> [[u|t:]<interface>:<port> ...]
-                         -t [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...]
-                         [-lc <cert_path>] [-lk <key_path>] [-tc <cert_path>]
-                         [-tk <key_path>] [-w <interface>:<port>]
-                         [-p <addr>:<port>] [-s <script_path>]
-                         [--sni <server_name>]
-                         [-tv <tls12|tls1|tls11|ssl3|ssl2|defualt>]
-                         [-ci <ciphers>]
+usage: mitm_snatcher.py [-h] [-m] -l
+                        [u|t:]<interface>:<port> [[u|t:]<interface>:<port> ...]
+                        -t [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...]
+                        [-lc <cert_path>] [-lk <key_path>] [-tc <cert_path>]
+                        [-tk <key_path>] [-w <interface>:<port>]
+                        [-p <addr>:<port>] [-s <script_path>]
+                        [--sni <server_name>]
+                        [-tv <tls1|tls11|tls12|ssl3|defualt|ssl2>]
+                        [-ci <ciphers>]
 
-mitm_intercept version 1.0
+mitm_snatcher version 1.6
 
 options:
   -h, --help            show this help message and exit
@@ -108,7 +114,7 @@ options:
   --sni <server_name>   If there is a need to change the server name in the SSL
                         handshake with the target. If omitted, it will be the
                         server name from the handshake with the listener.
-  -tv <tls12|tls1|tls11|ssl3|ssl2|defualt>, --tls-version <tls12|tls1|tls11|ssl3|ssl2|defualt>
+  -tv <tls1|tls11|tls12|ssl3|defualt|ssl2>, --tls-version <tls1|tls11|tls12|ssl3|defualt|ssl2>
                         If needed can be specified a specific TLS version.
   -ci <ciphers>, --ciphers <ciphers>
                         Sets different ciphers than the python defaults for the
@@ -228,5 +234,4 @@ We will see some of the TLS communication with those patchy scripts, but then th
 
 
 https://user-images.githubusercontent.com/28649672/162976250-75f2e3c5-f328-4bcc-ad49-a9561d493cb1.mp4
-
 
