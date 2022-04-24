@@ -235,3 +235,5 @@ We will see some of the TLS communication with those patchy scripts, but then th
 
 https://user-images.githubusercontent.com/28649672/162976250-75f2e3c5-f328-4bcc-ad49-a9561d493cb1.mp4
 
+
+Copyright (c) 2022 CyberArk Software Ltd. All rights reserved
