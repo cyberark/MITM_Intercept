@@ -1,7 +1,7 @@
 # MITM_Snatcher
 
 A little bit less hackish way to intercept and modify non-HTTP protocols through Burp and others with SSL and TLS interception support.
-This tool is for researchers and applicative penetration testers that perform a thick clients security assesments.
+This tool is for researchers and applicative penetration testers that perform thick clients security assesments.
 
 An improved version of the fantastic [mitm_relay](https://github.com/jrmdev/mitm_relay) project.
  
