@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 #-------------------------------------------------------------------------------
-# Name:        mitm_snatcher.py
+# Name:        mitm_intercept.py
 # Purpose:     Performs SSL interception and forwards it to a local proxy server
 #              for inspection.
 #
@@ -38,7 +39,7 @@ TLS_VERSIONS = {"defualt": ssl.PROTOCOL_TLS,
                 "tls12": ssl.PROTOCOL_TLSv1_2}
 
 
-__prog_name__ = "mitm_snatcher"
+__prog_name__ = "mitm_intercept"
 __version__ = 1.6
 
 
@@ -282,8 +283,8 @@ class RelayRequstHandlerMixIn:
         # Set headers for interception server.
         headers = {u'User-Agent':None, u'Accept':None, u'Accept-Encoding':None,
                    u'Connection':None}
-        headers['X-Mitm_Snatch-To'] = server_str if to_server else client_str
-        headers['X-Mitm_snatch-From'] = client_str if to_server else server_str
+        headers['X-Mitm_Intercept-To'] = server_str if to_server else client_str
+        headers['X-Mitm_Intercept-From'] = client_str if to_server else server_str
         headers["To-Server"] = str(to_server)
         url = "http://{0}:{1}/{2}/{3}/{4}".format(*self.server.webserver_addr,
               ('CLIENT_REQUEST/to' if to_server else 'SERVER_RESPONSE/from'),
