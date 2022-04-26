@@ -1,5 +1,5 @@
 
-mitm_snatcher is using the following open source components:
+mitm_intercept is using the following open source components:
 
 requests (https://github.com/psf/requests) : Apache-2.0 License
     Copyright 2019 Kenneth Reitz
