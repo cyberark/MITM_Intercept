@@ -1,4 +1,4 @@
-# MITM_Snatcher
+# MITM_Intercept
 
 A little bit less hackish way to intercept and modify non-HTTP protocols through Burp and others with SSL and TLS interception support.
 This tool is for researchers and applicative penetration testers that perform thick clients security assesments.
@@ -27,7 +27,7 @@ Another way to modify the messages is by using a python script that the HTTP int
 
 The body of the messages sent to the HTTP interception server will be printed to the shell. The messages will be printed after the changes if the modification script is given. After all the modifications, the interception server will also echo back as an HTTP response body.
 
-To decrypt the SSL/TLS communication, mitm_snatcher need to be provided a certificate and a key that the client will accept when starting a handshake with the listener. If the target server requires a specific certificate for a handshake, there is an option to give a certificate and a key. 
+To decrypt the SSL/TLS communication, mitm_intercept need to be provided a certificate and a key that the client will accept when starting a handshake with the listener. If the target server requires a specific certificate for a handshake, there is an option to give a certificate and a key. 
 
 A small chart to show the typical traffic flow:
 
@@ -36,7 +36,7 @@ A small chart to show the typical traffic flow:
 
 ## Differences from mitm_relay 
 
-mitm_snatcher is compatible with newer versions of python 3 (python 3.9) and is also compatible with windows (socket.MSG_DONTWAIT does not exist in windows, for example). We kept the option of using “STARTTLS,” and we called it “Mixed” mode. Using the SSL key log file is updated (the built-in option to use it is new from python 3.8), and we added the option to change the [sni header](https://en.wikipedia.org/wiki/Server_Name_Indication). Now, managing incoming and outgoing communication is done by [socketserver]( https://docs.python.org/3/library/socketserver.html), and all the data is sent to a subclass of [ThreadingHTTPServer](https://docs.python.org/3/library/http.server.html#http.server.ThreadingHTTPServer) that handle the data representation and modification. This way, it is possible to see the changes applied by the modification script in the response (convenient for using Burp). Also, we can now change the available ciphers that the script uses using the [OpenSSL cipher list format](https://www.openssl.org/docs/manmaster/man1/ciphers.html)
+mitm_intercept is compatible with newer versions of python 3 (python 3.9) and is also compatible with windows (socket.MSG_DONTWAIT does not exist in windows, for example). We kept the option of using “STARTTLS,” and we called it “Mixed” mode. Using the SSL key log file is updated (the built-in option to use it is new from python 3.8), and we added the option to change the [sni header](https://en.wikipedia.org/wiki/Server_Name_Indication). Now, managing incoming and outgoing communication is done by [socketserver]( https://docs.python.org/3/library/socketserver.html), and all the data is sent to a subclass of [ThreadingHTTPServer](https://docs.python.org/3/library/http.server.html#http.server.ThreadingHTTPServer) that handle the data representation and modification. This way, it is possible to see the changes applied by the modification script in the response (convenient for using Burp). Also, we can now change the available ciphers that the script uses using the [OpenSSL cipher list format](https://www.openssl.org/docs/manmaster/man1/ciphers.html)
 
 
 ## Prerequisites
@@ -48,85 +48,69 @@ mitm_snatcher is compatible with newer versions of python 3 (python 3.9) and is 
 ## Usage
 
 ```
-usage: mitm_snatcher.py [-h] [-m] -l
-                        [u|t:]<interface>:<port> [[u|t:]<interface>:<port> ...]
-                        -t [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...]
-                        [-lc <cert_path>] [-lk <key_path>] [-tc <cert_path>]
-                        [-tk <key_path>] [-w <interface>:<port>]
-                        [-p <addr>:<port>] [-s <script_path>]
-                        [--sni <server_name>]
-                        [-tv <tls1|tls11|tls12|ssl3|defualt|ssl2>]
-                        [-ci <ciphers>]
+usage: mitm_intercept.py [-h] [-m] -l [u|t:]<interface>:<port> [[u|t:]<interface>:<port> ...] -t
+                         [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...] [-lc <cert_path>]
+                         [-lk <key_path>] [-tc <cert_path>] [-tk <key_path>] [-w <interface>:<port>]
+                         [-p <addr>:<port>] [-s <script_path>] [--sni <server_name>]
+                         [-tv <defualt|tls12|tls11|ssl3|tls1|ssl2>] [-ci <ciphers>]
 
-mitm_snatcher version 1.6
+mitm_intercept version 1.6
 
 options:
   -h, --help            show this help message and exit
-  -m, --mix-connection  Perform TCP relay without SSL handshake. If one of the
-                        relay sides starts an SSL handshake, wrap the connection
-                        with SSL, and intercept the communication. A listener
-                        certificate and private key must be provided.
+  -m, --mix-connection  Perform TCP relay without SSL handshake. If one of the relay sides starts an
+                        SSL handshake, wrap the connection with SSL, and intercept the
+                        communication. A listener certificate and private key must be provided.
   -l [u|t:]<interface>:<port> [[u|t:]<interface>:<port> ...], --listen [u|t:]<interface>:<port> [[u|t:]<interface>:<port> ...]
-                        Creates SSLInterceptServer listener that listens on the
-                        specified interface and port. Can create multiple
-                        listeners with a space between the parameters. Adding
-                        "u:" before the address will make the listener listen in
-                        UDP protocol. TCP protocol is the default but adding "t:"
-                        for cleanliness is possible. The number of listeners must
-                        match the number of targets. The i-th listener will relay
-                        to the i-th target.
-  -t [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...], --target [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...]
-                        Directs each SSLInterceptServer listener to forward the
-                        communication to a target address and port. Can create
-                        multiple targets with a space between the parameters.
-                        Adding "u:" before the address will make the target
-                        communicate in UDP protocol.TCP protocol is the default
-                        but adding "t:" for cleanliness is possible. The number
-                        of listeners must match the number of targets. The i-th
+                        Creates SSLInterceptServer listener that listens on the specified interface
+                        and port. Can create multiple listeners with a space between the parameters.
+                        Adding "u:" before the address will make the listener listen in UDP
+                        protocol. TCP protocol is the default but adding "t:" for cleanliness is
+                        possible. The number of listeners must match the number of targets. The i-th
                         listener will relay to the i-th target.
+  -t [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...], --target [u|t:]<addr>:<port> [[u|t:]<addr>:<port> ...]
+                        Directs each SSLInterceptServer listener to forward the communication to a
+                        target address and port. Can create multiple targets with a space between
+                        the parameters. Adding "u:" before the address will make the target
+                        communicate in UDP protocol.TCP protocol is the default but adding "t:" for
+                        cleanliness is possible. The number of listeners must match the number of
+                        targets. The i-th listener will relay to the i-th target.
   -lc <cert_path>, --listener-cert <cert_path>
-                        The certificate that the listener uses when a client
-                        contacts him. Can be a self-sign certificate if the
-                        client will accept it.
+                        The certificate that the listener uses when a client contacts him. Can be a
+                        self-sign certificate if the client will accept it.
   -lk <key_path>, --listener-key <key_path>
                         The private key path for the listener certificate.
   -tc <cert_path>, --target-cert <cert_path>
-                        The certificate that used to create a connection with the
-                        target. Can be a self-sign certificate if the target will
-                        accept it. Doesn't necessary if the target doesn't
-                        require a specific certificate.
+                        The certificate that used to create a connection with the target. Can be a
+                        self-sign certificate if the target will accept it. Doesn't necessary if the
+                        target doesn't require a specific certificate.
   -tk <key_path>, --target-key <key_path>
                         The private key path for the target certificate.
   -w <interface>:<port>, --webserver <interface>:<port>
-                        Specifies the interface and the port the
-                        InterceptionServer webserver will listens on. If omitted
-                        the default is 127.0.0.1:49999
+                        Specifies the interface and the port the InterceptionServer webserver will
+                        listens on. If omitted the default is 127.0.0.1:49999
   -p <addr>:<port>, --proxy <addr>:<port>
-                        Specifies the address and the port of a proxy between the
-                        InterceptionServer webserver and the SSLInterceptServer.
-                        Can be configured so the communication will go through a
-                        local proxy like Burp. If omitted, the communication will
+                        Specifies the address and the port of a proxy between the InterceptionServer
+                        webserver and the SSLInterceptServer. Can be configured so the communication
+                        will go through a local proxy like Burp. If omitted, the communication will
                         be printed in the shell only.
   -s <script_path>, --script <script_path>
-                        A path to a script that the InterceptionServer webserver
-                        executes. Must contain the function
-                        handle_request(message) that will run before sending it
-                        to the target or handle_response(message) after receiving
-                        a message from the target. Can be omitted if doesn't
-                        necessary.
-  --sni <server_name>   If there is a need to change the server name in the SSL
-                        handshake with the target. If omitted, it will be the
-                        server name from the handshake with the listener.
-  -tv <tls1|tls11|tls12|ssl3|defualt|ssl2>, --tls-version <tls1|tls11|tls12|ssl3|defualt|ssl2>
+                        A path to a script that the InterceptionServer webserver executes. Must
+                        contain the function handle_request(message) that will run before sending it
+                        to the target or handle_response(message) after receiving a message from the
+                        target. Can be omitted if doesn't necessary.
+  --sni <server_name>   If there is a need to change the server name in the SSL handshake with the
+                        target. If omitted, it will be the server name from the handshake with the
+                        listener.
+  -tv <defualt|tls12|tls11|ssl3|tls1|ssl2>, --tls-version <defualt|tls12|tls11|ssl3|tls1|ssl2>
                         If needed can be specified a specific TLS version.
   -ci <ciphers>, --ciphers <ciphers>
-                        Sets different ciphers than the python defaults for the
-                        TLS handshake. It should be a string in the OpenSSL
-                        cipher list format (https://www.openssl.org/docs/manmaste
-                        r/man1/ciphers.html).
+                        Sets different ciphers than the python defaults for the TLS handshake. It
+                        should be a string in the OpenSSL cipher list format
+                        (https://www.openssl.org/docs/manmaster/man1/ciphers.html).
 
-For dumping SSL (pre-)master secrets to a file, set the environment variable
-SSLKEYLOGFILE with a file path. Useful for Wireshark.
+For dumping SSL (pre-)master secrets to a file, set the environment variable SSLKEYLOGFILE with a
+file path. Useful for Wireshark.
 ```
 
 The communication needs to be directed to the listener for intercepting arbitrary protocols. The way to do so depends on how the client operates. Sometimes it uses a DNS address, and changing the hosts file will be enough to resolve the listener address. If the address is hard-coded, then more creative ways need to be applied (usually some modifications of the routing table, patching the client, or [using VM and iptables](https://github.com/jrmdev/mitm_relay#host-configuration)).
